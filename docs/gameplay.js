@@ -1,10 +1,27 @@
+/*
+Name:     Luke Martin
+Class:    CPSC 332 - Web Dev
+Semester: Fall 2022
+Project:  Homework 5
+Last Mod: November 6, 2022
+Desc:     The file contains the Javscript for a basic breakout game using JS and a canvas.
+Modified from https://github.com/end3r/Gamedev-Canvas-workshop
+*/
+
 var mainColor = "skyblue";
 var secondaryColor = "grey";
 var thirdColor = "white";
-
-var color1 = "#0095DD";
+var fourthColor = "#0095DD";
 
 window.onload = function () {
+    const gameSpeedSlider = document.getElementById("gameSpeedSlider");
+    const gameSpeedLabel = document.getElementById("gameSpeedLabel");
+    const pauseButton = document.getElementById("pauseButton");
+    const continueButton = document.getElementById("continueButton");
+    const newGameButton = document.getElementById("newGameButton");
+    const reloadButton = document.getElementById("reloadButton");
+
+
     var canvas = document.getElementById("myCanvas");
     var ctx = canvas.getContext("2d");
     const startMenuBorder = 15;
@@ -36,8 +53,14 @@ window.onload = function () {
     var brickOffsetTop = 30;
     var brickOffsetLeft = 30;
 
+    var animFrameId;
     var score = 0;
+    var currentScore = 0;
+    var highScore = 0;
     var lives = 3;
+    var pause = true;
+    var gameWon = false;
+    var gameLost = false;
 
     var bricks = [];
 
@@ -51,6 +74,7 @@ window.onload = function () {
     document.addEventListener("keydown", keyDownHandler, false);
     document.addEventListener("keyup", keyUpHandler, false);
     document.addEventListener("mousemove", mouseMoveHandler, false);
+    gameSpeedSlider.addEventListener("input", adjustGameSpeed);
 
     function keyDownHandler(e) {
         if (e.keyCode == 39) {
@@ -87,10 +111,10 @@ window.onload = function () {
                         b.status = 0;
                         score++;
                         if (score == brickRowCount * brickColumnCount) {
-                            //TODO: draw message on the canvas
-                            alert("YOU WIN, CONGRATS!");
-                            //TODO: pause game instead of reloading
-                            document.location.reload();
+                            displayWin();
+                            gameWon = true;
+                            pause = true;
+                            window.cancelAnimationFrame(animFrameId);
                         }
                     }
                 }
@@ -101,7 +125,7 @@ window.onload = function () {
     function drawBall() {
         ctx.beginPath();
         ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
-        ctx.fillStyle = color1;
+        ctx.fillStyle = secondaryColor;
         ctx.fill();
         ctx.closePath();
     }
@@ -109,7 +133,7 @@ window.onload = function () {
     function drawPaddle() {
         ctx.beginPath();
         ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
-        ctx.fillStyle = color1;
+        ctx.fillStyle = fourthColor;
         ctx.fill();
         ctx.closePath();
     }
@@ -124,7 +148,7 @@ window.onload = function () {
                     bricks[c][r].y = brickY;
                     ctx.beginPath();
                     ctx.rect(brickX, brickY, brickWidth, brickHeight);
-                    ctx.fillStyle = color1;
+                    ctx.fillStyle = fourthColor;
                     ctx.fill();
                     ctx.closePath();
                 }
@@ -134,13 +158,13 @@ window.onload = function () {
 
     function drawScore() {
         ctx.font = "16px Arial";
-        ctx.fillStyle = color1;
+        ctx.fillStyle = fourthColor;
         ctx.fillText("Score: " + score, 60, 20);
     }
 
     function drawLives() {
         ctx.font = "16px Arial";
-        ctx.fillStyle = color1;
+        ctx.fillStyle = fourthColor;
         ctx.fillText("Lives: " + lives, canvas.width - 65, 20);
     }
 
@@ -167,16 +191,14 @@ window.onload = function () {
             else {
                 lives--;
                 if (lives <= 0) {
-                    //TODO: draw message on the canvas
-                    alert("GAME OVER");
-                    //TODO: pause game instead of reloading
-                    document.location.reload();
+                    displayLoss();
+                    gameLost = true;
+                    pause = true;
+                    window.cancelAnimationFrame(animFrameId);
                 }
                 else {
                     x = canvas.width / 2;
                     y = canvas.height - 30;
-                    dx = 3;
-                    dy = -3;
                     paddleX = (canvas.width - paddleWidth) / 2;
                 }
             }
@@ -194,30 +216,19 @@ window.onload = function () {
         y += dy;
 
         //TODO: pause game check
-
-        requestAnimationFrame(draw);
-    }
-
-    /*
-        Additions to starter code
-    */
-
-    //Additional variables used to help make dimensions/locations easier to reuse            
-    //controls game speed            
-    //pause game variable            
-    //high score tracking variables
-    //other variables?            
-
-    //event listeners added
-    //game speed changes handler            
-    //pause game event handler            
-    //start a new game event handler            
-    //continue playing
-    //reload click event listener            
+        if (!pause) {
+            animFrameId = requestAnimationFrame(draw);
+        }
+        else {
+            window.cancelAnimationFrame(animFrameId);
+        }
+    }     
 
     //Drawing a high score
     function drawHighScore() {
-
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "black";
+        ctx.fillText("High Score: " + highScore, canvas.width / 2, 20);
     }
 
     // draw the menu screen, including labels and button
@@ -295,6 +306,7 @@ window.onload = function () {
         let buttonYEnd = buttonYStart + startButtonHeight;
 
         if (relX >= buttonXStart && relX <= buttonXEnd && relY >= buttonYStart && relY <= buttonYEnd) {
+            pause = false;
             clearMenu();
             draw();
         }
@@ -302,39 +314,100 @@ window.onload = function () {
 
     //function to handle game speed adjustments when we move our slider
     function adjustGameSpeed() {
-        //update the slider display                
-        //update the game speed multiplier                
+        let speed = gameSpeedSlider.value;
+        gameSpeedLabel.innerText = "Game Speed: " + speed;            
+        dx = (dx / dx) * speed * 2
+        dy = (dy / dy) * speed * 2                 
     };
 
     //function to toggle the play/paused game state
     function togglePauseGame() {
-        //toggle state                
-        //if we are not paused, we want to continue animating (hint: zyBook 8.9)
+        if (!(gameLost || gameWon)) {  
+            pause = !pause;
+            if (!pause) {
+                draw();
+            }
+        }
     };
 
-    //function to check win state
-    //if we win, we want to accumulate high score and draw a message to the canvas
-    //if we lose, we want to draw a losing message to the canvas
-    function checkWinState() {
+    pauseButton.addEventListener("click", togglePauseGame);
 
-    };
+    function displayWin() {
+        setShadow();
+
+        ctx.font = "40px Arial";
+        ctx.fillStyle = thirdColor;
+        ctx.fillText("You Win!", canvas.width / 2, 140);
+        ctx.fillText("Congratulations!", canvas.width / 2, 200);
+
+        resetShadow();
+    }
+
+    function displayLoss() {
+        setShadow();
+
+        ctx.font = "40px Arial";
+        ctx.fillStyle = thirdColor;
+        ctx.fillText("Sorry! Game Over!", canvas.width / 2, 140);
+
+        resetShadow();
+    }
 
     //function to clear the board state and start a new game (no high score accumulation)
-    function startNewGame(resetScore) {
-
+    function startNewGame() {
+        resetBoard();
+        currentScore = 0;
+        highScore = 0;
+        lives = 3;
+        pause = true;
+        draw();
     };
+
+    newGameButton.addEventListener("click", startNewGame);
+    reloadButton.addEventListener("click", () => document.location.reload());
 
     //function to reset the board and continue playing (accumulate high score)
     //should make sure we didn't lose before accumulating high score
     function continuePlaying() {
+        if (gameWon) {
+            currentScore += score;
+            if (currentScore > highScore) {
+                highScore = currentScore;
+            }
+            resetBoard();
+            draw();
+        }
+        if (gameLost) {
+            lives = 3;
+            currentScore = 0;
+            resetBoard();
+            draw();
 
+        }
     };
 
+    continueButton.addEventListener("click", continuePlaying);
+
     //function to reset starting game info
-    function resetBoard(resetLives) {
-        //reset paddle position
-        //reset bricks               
-        //reset score and lives               
+    function resetBoard() {
+        gameWon = false;
+        gameLost = false;
+
+        bricks = [];
+        for (var c = 0; c < brickColumnCount; c++) {
+            bricks[c] = [];
+            for (var r = 0; r < brickRowCount; r++) {
+                bricks[c][r] = { x: 0, y: 0, status: 1 };
+            }
+        }
+
+        paddleX = (canvas.width - paddleWidth) / 2;
+        score = 0;
+
+        x = canvas.width / 2;
+        y = canvas.height - 30;
+        dx = Math.abs(dx);
+        dy = -1 * Math.abs(dy);
     };
 
     //draw the menu.

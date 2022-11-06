@@ -1,3 +1,13 @@
+/*
+Name:     Luke Martin
+Class:    CPSC 332 - Web Dev
+Semester: Fall 2022
+Project:  Homework 5
+Last Mod: November 6, 2022
+Desc:     The file contains the CSS for a basic breakout game using JS and a canvas.
+Modified from https://github.com/end3r/Gamedev-Canvas-workshop
+*/
+
 * {
     padding: 0;
     margin: 0;
@@ -7,4 +17,65 @@ canvas {
     background: skyblue;
     display: block;
     margin: 0 auto;
+    margin-top: 20px;
+}
+
+#optionsLabel {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+#options {
+    margin: 20px auto;
+    width: 500px;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border: dashed lightblue;
+    justify-content: space-evenly;
+}
+
+#container {
+    background-color: white;
+    width: 550px;
+    margin: 20px auto;
+    padding: 5px;
+    border-radius: 15px;
+}
+
+#pauseButton {
+    width: 100%;
+}
+
+.option {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#speedOption {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#gameSpeedSlider {
+    width: 375px;
+}
+
+#newGameButton {
+    width: 48%;
+}
+
+#continueButton {
+    width: 48%;
+}
+
+#reloadButton {
+    width: 100%;
+}
+
+body {
+    background-color: lightgrey;
 }
